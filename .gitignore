@@ -1,0 +1,156 @@
+# AI Vision 150
+
+A beginner-friendly local web app that uses a laptop webcam and a lightweight YOLO object detection model to identify objects in real time.
+
+This project is built for a school exhibition and celebrates the theme:
+
+- AI VISION 150
+- 150 Years of Human Learning → The Future of AI
+
+## Features
+
+- Live webcam feed in the browser
+- Real-time object detection using YOLO
+- Bounding boxes, object names, and confidence values
+- Object count panel
+- AI personality comments for detected objects
+- Visitor Challenge mode
+- Simple local setup using Flask, OpenCV, and YOLO
+- No paid API required
+- Works on a normal laptop without GPU
+
+## Folder Structure
+
+```text
+AI-Vision-150/
+├── app.py
+├── app/
+│   ├── __init__.py
+│   ├── detection.py
+│   ├── routes.py
+│   ├── static/
+│   │   ├── css/
+│   │   │   └── style.css
+│   │   └── js/
+│   │       └── app.js
+│   └── templates/
+│       └── index.html
+├── requirements.txt
+├── README.md
+└── .gitignore
+```
+
+## Quick Start
+
+1. Open a terminal in the project folder.
+2. Create a virtual environment:
+
+```bash
+python -m venv .venv
+```
+
+3. Activate it:
+
+- Windows:
+
+```bash
+.venv\Scripts\activate
+```
+
+- macOS/Linux:
+
+```bash
+source .venv/bin/activate
+```
+
+4. Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+5. Start the app:
+
+```bash
+python app.py
+```
+
+6. Open this in your browser:
+
+```text
+http://127.0.0.1:5000
+```
+
+## YOLO Model Download Location
+
+The first time you run the app, Ultralytics will download the lightweight YOLO model file `yolov8n.pt` automatically.
+
+On most computers it is saved here:
+
+- Windows: `C:\Users\<YourName>\AppData\Local\cache\ultralytics\weights\yolov8n.pt`
+- macOS/Linux: `~/.cache/ultralytics/weights/yolov8n.pt`
+
+The app uses the standard Ultralytics default download behavior, so no manual model download is needed.
+
+## Using the Application
+
+- Click Start Camera.
+- Allow webcam access in the browser.
+- The AI will begin detecting objects in real time.
+- Detected objects will appear with boxes, names, and confidence percentages.
+- Click Visitor Challenge to try the challenge mode.
+- Use Stop Camera when finished.
+- Click Reset to clear the current session.
+
+## Webcam and Browser Tips
+
+- Make sure your laptop webcam is working.
+- If the browser asks for camera permission, allow it.
+- If the camera is unavailable, you will see a friendly error message.
+- Some laptops may need you to close other webcam apps before using this project.
+
+## Error Handling
+
+This project includes beginner-friendly error handling for:
+
+- Webcam unavailable
+- Camera permission denied
+- Browser does not support camera access
+- Model could not be loaded
+- Missing Python dependencies
+
+If you get an error, check the terminal output and run:
+
+```bash
+pip install -r requirements.txt
+```
+
+## Important Notes
+
+- This app runs fully on your laptop.
+- It does not use Cloud APIs or paid services.
+- It does not require a GPU.
+- The YOLO model is lightweight and designed for smooth local performance.
+
+## Beginner Troubleshooting
+
+If the app fails to start:
+
+1. Make sure the virtual environment is active.
+2. Run:
+
+```bash
+pip install -r requirements.txt
+```
+
+3. Try running:
+
+```bash
+python app.py
+```
+
+4. If the webcam still does not work, check if another app is using the camera.
+
+## License
+
+This project is for school exhibition use and educational demonstration.

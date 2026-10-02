@@ -1,0 +1,49 @@
+import base64
+
+import cv2
+import numpy as np
+from flask import Blueprint, jsonify, render_template, request
+
+from app.detection import detect_objects
+
+main_bp = Blueprint("main", __name__)
+
+
+@main_bp.route("/")
+def index():
+    return render_template("index.html")
+
+
+@main_bp.route("/health")
+def health():
+    return jsonify({"status": "ok", "message": "AI Vision 150 is running."})
+
+
+@main_bp.route("/detect", methods=["POST"])
+def detect():
+    if "image" not in request.files:
+        return jsonify({"error": "No image was received from the browser."}), 400
+
+    uploaded_file = request.files["image"]
+    if uploaded_file.filename == "":
+        return jsonify({"error": "The uploaded image is empty."}), 400
+
+    try:
+        image_data = uploaded_file.read()
+        if not image_data:
+            return jsonify({"error": "No image data was found."}), 400
+
+        nparr = np.frombuffer(image_data, np.uint8)
+        frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+        if frame is None:
+            return jsonify({"error": "The webcam image could not be decoded."}), 400
+
+        result = detect_objects(frame)
+        return jsonify(result)
+
+    except Exception as exc:
+        return jsonify({
+            "error": f"Detection failed: {str(exc)}",
+            "status": "error",
+        }), 500

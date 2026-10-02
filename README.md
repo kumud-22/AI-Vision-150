@@ -1,2 +1,4 @@
-# AI-Vision-150
-AI Object Detection Web Application for School's 150th Anniversary Exhibition
+Flask==3.0.3
+opencv-python==4.10.0.84
+numpy==1.26.4
+ultralytics==8.2.102

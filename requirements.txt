@@ -1,0 +1,260 @@
+const video = document.getElementById('video');
+const overlayCanvas = document.getElementById('overlayCanvas');
+const startCameraBtn = document.getElementById('startCameraBtn');
+const stopCameraBtn = document.getElementById('stopCameraBtn');
+const resetBtn = document.getElementById('resetBtn');
+const challengeBtn = document.getElementById('challengeBtn');
+const objectCount = document.getElementById('objectCount');
+const resultsList = document.getElementById('resultsList');
+const personalityText = document.getElementById('personalityText');
+const challengeText = document.getElementById('challengeText');
+const scoreValue = document.getElementById('scoreValue');
+const messageBanner = document.getElementById('messageBanner');
+const cameraStatus = document.getElementById('cameraStatus');
+
+let stream = null;
+let detectionLoop = null;
+let challengeTarget = null;
+let score = 0;
+
+const CHALLENGE_OBJECTS = [
+  'backpack',
+  'book',
+  'laptop',
+  'bottle',
+  'chair',
+  'clock',
+  'person',
+  'cell phone'
+];
+
+function setBanner(text, isError = false) {
+  messageBanner.textContent = text;
+  messageBanner.classList.toggle('error', isError);
+}
+
+function setCameraStatus(statusText, isLive = false) {
+  cameraStatus.textContent = statusText;
+  cameraStatus.style.color = isLive ? '#7af9a7' : '#ffd166';
+}
+
+function resetResults() {
+  objectCount.textContent = '0';
+  resultsList.innerHTML = '<li>Waiting for first detection...</li>';
+  personalityText.textContent = 'The AI is warming up and preparing for greatness.';
+}
+
+function stopDetectionLoop() {
+  if (detectionLoop) {
+    clearInterval(detectionLoop);
+    detectionLoop = null;
+  }
+}
+
+function stopCamera() {
+  stopDetectionLoop();
+
+  if (stream) {
+    stream.getTracks().forEach((track) => track.stop());
+    stream = null;
+  }
+
+  if (video) {
+    video.srcObject = null;
+  }
+
+  setCameraStatus('Camera Offline', false);
+  setBanner('Camera stopped. Press Start Camera when you are ready.');
+}
+
+function drawDetectionOverlay(detections) {
+  const ctx = overlayCanvas.getContext('2d');
+  const width = video.videoWidth || 640;
+  const height = video.videoHeight || 480;
+
+  overlayCanvas.width = width;
+  overlayCanvas.height = height;
+  ctx.clearRect(0, 0, width, height);
+
+  detections.forEach((detection) => {
+    const x = detection.x1;
+    const y = detection.y1;
+    const rectWidth = Math.max(detection.x2 - detection.x1, 10);
+    const rectHeight = Math.max(detection.y2 - detection.y1, 10);
+
+    ctx.strokeStyle = '#7ef9ff';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(x, y, rectWidth, rectHeight);
+
+    const label = `${detection.class_name} ${detection.confidence}%`;
+    ctx.font = 'bold 18px Inter, sans-serif';
+    const textWidth = ctx.measureText(label).width + 16;
+
+    ctx.fillStyle = 'rgba(6, 18, 28, 0.78)';
+    ctx.fillRect(x, Math.max(0, y - 30), textWidth, 28);
+
+    ctx.fillStyle = '#f3fbff';
+    ctx.fillText(label, x + 8, Math.max(18, y - 10));
+  });
+}
+
+function updateDetectionList(detections) {
+  const topItems = detections.slice(0, 4);
+
+  if (!topItems.length) {
+    resultsList.innerHTML = '<li>No objects detected yet.</li>';
+    return;
+  }
+
+  resultsList.innerHTML = topItems
+    .map(
+      (item) =>
+        `<li>${item.class_name} — ${item.confidence.toFixed(1)}%</li>`
+    )
+    .join('');
+}
+
+function checkChallengeMatch(detections) {
+  if (!challengeTarget) {
+    return;
+  }
+
+  const found = detections.some((item) => {
+    const normalized = item.class_name.toLowerCase();
+    return normalized === challengeTarget.toLowerCase();
+  });
+
+  if (found) {
+    score += 1;
+    scoreValue.textContent = String(score);
+    challengeText.innerHTML = '🎉 DETECTED!<br>You fooled the AI... or did the AI fool you?';
+    setBanner('🎉 DETECTED! Great job!');
+    challengeTarget = null;
+
+    setTimeout(() => {
+      launchChallenge();
+    }, 1600);
+  }
+}
+
+function launchChallenge() {
+  const randomIndex = Math.floor(Math.random() * CHALLENGE_OBJECTS.length);
+  challengeTarget = CHALLENGE_OBJECTS[randomIndex];
+  challengeText.textContent = `Can the AI find a ${challengeTarget}?`;
+  setBanner('Visitor challenge is active. Place the object in front of the camera.');
+}
+
+function processDetectionResponse(data) {
+  if (!data || data.error) {
+    setBanner(data?.error || 'Detection failed.', true);
+    return;
+  }
+
+  const detections = Array.isArray(data.detections) ? data.detections : [];
+  const count = Number(data.count || detections.length || 0);
+
+  objectCount.textContent = String(count);
+  updateDetectionList(detections);
+  drawDetectionOverlay(detections);
+
+  if (detections.length > 0) {
+    const topItem = detections[0];
+    personalityText.textContent = data.comment || `I can see a ${topItem.class_name}.`;
+  } else {
+    personalityText.textContent = 'The AI is scanning carefully. Nothing obvious yet.';
+  }
+
+  checkChallengeMatch(detections);
+}
+
+async function captureFrame() {
+  if (!video || video.readyState < 2) {
+    return;
+  }
+
+  const canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth || 640;
+  canvas.height = video.videoHeight || 480;
+
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  canvas.toBlob(async (blob) => {
+    if (!blob) {
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('image', blob, 'frame.jpg');
+
+    try {
+      const response = await fetch('/detect', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        setBanner(errorData.error || 'The AI could not detect objects.', true);
+        return;
+      }
+
+      const data = await response.json();
+      processDetectionResponse(data);
+    } catch (error) {
+      setBanner('Connection error while running the AI model. Please try again.', true);
+    }
+  }, 'image/jpeg', 0.9);
+}
+
+async function startCamera() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    setBanner('This browser does not support webcam access. Please use a modern browser.', true);
+    return;
+  }
+
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user' },
+      audio: false,
+    });
+
+    video.srcObject = stream;
+    await video.play();
+
+    setCameraStatus('Camera Live', true);
+    setBanner('Camera ready. The AI is watching and learning.');
+    resetResults();
+
+    stopDetectionLoop();
+    detectionLoop = setInterval(captureFrame, 350);
+  } catch (error) {
+    console.error(error);
+    setCameraStatus('Camera Offline', false);
+    setBanner('Webcam permission was denied or the camera is unavailable. Please allow access and try again.', true);
+  }
+}
+
+function resetSystem() {
+  stopDetectionLoop();
+  challengeTarget = null;
+  score = 0;
+  scoreValue.textContent = '0';
+  resetResults();
+  challengeText.textContent = 'Press the Visitor Challenge button to begin.';
+  setBanner('System reset. Ready for a new round of detection.');
+  if (stream) {
+    stopCamera();
+  }
+}
+
+startCameraBtn.addEventListener('click', startCamera);
+stopCameraBtn.addEventListener('click', stopCamera);
+resetBtn.addEventListener('click', resetSystem);
+challengeBtn.addEventListener('click', launchChallenge);
+
+window.addEventListener('beforeunload', stopCamera);
+
+resetResults();
+setBanner('Ready for a discovery moment.');
+setCameraStatus('Camera Offline', false);

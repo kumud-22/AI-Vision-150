@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Vision 150</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="title-block">
+          <p class="eyebrow">150 YEARS OF LEARNING — NOW WITH AI</p>
+          <h1>AI VISION 150</h1>
+          <p class="subtitle">150 Years of Human Learning → The Future of AI</p>
+        </div>
+        <div class="status-chip" id="cameraStatus">Camera Offline</div>
+      </header>
+
+      <main class="content-grid">
+        <section class="camera-panel">
+          <div class="video-container">
+            <video id="video" autoplay playsinline muted></video>
+            <canvas id="overlayCanvas"></canvas>
+            <div class="camera-overlay">
+              <span class="live-dot"></span>
+              <span>LIVE CAMERA</span>
+            </div>
+          </div>
+
+          <div class="controls">
+            <button id="startCameraBtn" class="primary-btn">Start Camera</button>
+            <button id="stopCameraBtn" class="neutral-btn">Stop Camera</button>
+            <button id="resetBtn" class="secondary-btn">Reset</button>
+            <button id="challengeBtn" class="challenge-btn">Visitor Challenge</button>
+          </div>
+
+          <div id="messageBanner" class="message-banner">
+            Ready for a discovery moment.
+          </div>
+        </section>
+
+        <aside class="sidebar">
+          <div class="stat-box">
+            <h3>Objects Detected</h3>
+            <div id="objectCount" class="count-number">0</div>
+          </div>
+
+          <div class="info-box personality-box">
+            <h3>AI Personality</h3>
+            <p id="personalityText">The AI is warming up and preparing for greatness.</p>
+          </div>
+
+          <div class="info-box challenge-box">
+            <h3>🎯 AI CHALLENGE</h3>
+            <p id="challengeText">Press the Visitor Challenge button to begin.</p>
+            <p class="score-line">Score: <span id="scoreValue">0</span></p>
+          </div>
+
+          <div class="info-box results-box">
+            <h3>Live Results</h3>
+            <ul id="resultsList">
+              <li>Waiting for first detection...</li>
+            </ul>
+          </div>
+        </aside>
+      </main>
+
+      <section class="timeline-section">
+        <h2>School Timeline</h2>
+        <div class="timeline">
+          <div class="year-box">
+            <span class="year">1876</span>
+          </div>
+          <div class="year-box">
+            <span class="year">1926</span>
+          </div>
+          <div class="year-box">
+            <span class="year">1976</span>
+          </div>
+          <div class="year-box highlight">
+            <span class="year">2026</span>
+            <small>Today: Humans + AI</small>
+          </div>
+          <div class="year-box">
+            <span class="year">2076</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="future-section">
+        <h2>Future Vision</h2>
+        <p>What will our school look like 150 years from now?</p>
+      </section>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  </body>
+</html>
